@@ -1,0 +1,99 @@
+<!DOCTYPE HTML>
+<html ng-app="myApp">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta http-equiv="Content-Security-Policy" content="default-src * data:; style-src * 'unsafe-inline'; script-src * 'unsafe-inline' 'unsafe-eval'">
+  <script src="components/loader.js"></script>
+
+<script src="lib/angular/angular.min.js"></script>
+  <script src="lib/onsenui/js/onsenui.min.js"></script>
+  <script src="lib/onsenui/js/angular-onsenui.min.js"></script>
+  <script src="components/monaca-jquery/jquery.js"></script>
+
+<link rel="stylesheet" href="components/loader.css">
+  <link rel="stylesheet" href="lib/onsenui/css/onsenui.css">
+  <link rel="stylesheet" href="lib/onsenui/css/onsen-css-components.css">
+  <link rel="stylesheet" href="css/style.css">
+
+  <script>
+    var app = angular.module('myApp', ['onsen']);
+    app.controller("SushiController", function($scope) {
+      ons.ready(function() {
+        console.log("Onsen UI is ready!");
+        $scope.$apply(function(){
+            $scope.neta = "カンパチ";
+        });
+        $scope.search = function(){
+          $scope.failed = false;
+          $scope.searching = true;
+          
+          var appkey = "42cb4d20c273649a3e6f256ab8019db9";
+          var keyword = $scope.neta + "%20sushi";
+          var flickr = "https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key="
+                        + appkey + "&text=" + keyword + "&format=json";          
+          $.ajax({
+            url: flickr,
+            dataType: "jsonp",
+            jsonpCallback: 'jsonFlickrApi',
+            success: function(js){
+              $scope.$apply(function(){
+                $scope.photos = js.photos;
+                $scope.failed = false;
+                $scope.searching = false;
+              });
+            },
+            error: function(error){
+              $scope.$apply(function(){
+                $scope.failed = true;
+                $scope.searching = false;
+              });
+            }
+          });
+        }
+      });
+    });
+  </script>
+</head>
+<body> 
+  <ons-page ng-controller="SushiController as sushi">
+    <ons-toolbar>
+      <div class="center">Sushi1</div>
+    </ons-toolbar>
+    
+    <div class="center" style="margin:10px;">
+      <p>あなたの好きなお寿司はなんですか？</p>
+      <p>
+        <ons-input ng-model="neta" placeholder="寿司ネタ" modifier="underbar" float>
+        </ons-input>
+      </p>
+      <p>
+        <ons-button modifier="large--cta" ng-click="search()" ng-disabled="neta.length==0 || searching">
+          <span ng-if="!searching">検索</span>
+          <ons-icon ng-if="searching" icon='ion-load-d' size="30px" spin></ons-icon>
+        </ons-button>
+      </p>
+            
+      <p>
+        <ons-list-item ng-show="failed">
+          Flickr APIが反応しません。
+        </ons-list-item>
+        <ons-list-item ng-show="photos.photo.length==0">
+          見つかりません。
+        </ons-list-item>
+      </p>      
+      <ons-list ng-repeat="p in photos.photo">
+        <ons-list-item ng-click="" tappable>
+          <ons-row>
+            <ons-col>
+              <img width="100%" alt="{{p.title}}" ng-src="https://farm{{p.farm-id}}.staticflickr.com/{{p.server-id}}/{{p.id}}_{{p.secret}}.jpg">
+              <span class="list__item__title">
+                {{p.title}}
+              </span>
+            </ons-col>
+          </ons-row>
+      </ons-list>      
+    </div>
+  </ons-page>
+</body>
+</html>
